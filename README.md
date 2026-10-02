@@ -105,33 +105,13 @@ Copy `.env.example` to `.env` manually only if setup has not already created it.
 
 Restart the server after backend configuration changes. Existing completed captures are preserved; sessions are invalidated on restart. Keep the capture directory writable only by trusted laptop users. The operating-system-held lock in that directory prevents a second owner; binding the HTTP port happens before camera acquisition.
 
-## Standalone frontend and future manual Vercel deployment
+## Manual remote deployment
 
-`frontend/` consists solely of static files, with no build step, packages, CDN dependencies, credentials, or backend code. Manually deploy **only that folder** as a static Vercel project (framework preset “Other”; no build command; serve the folder contents). Do not deploy the repository's `.env` or captures. No deployment was performed here.
+See [REMOTE_DEPLOYMENT.md](REMOTE_DEPLOYMENT.md) for the exact Windows tunnel commands, Vercel settings, runtime URL configuration, origin allowlist, and remote acceptance steps.
 
-Set the public runtime setting in `frontend/config.js` to the **reachable HTTPS origin of your future backend**:
+The source frontend remains `frontend/`, with `API_BASE_URL: ""` for local same-origin use. `tools/prepare_frontend.py --api-base-url <your-real-HTTPS-origin>` creates a separate allowlisted `.deploy/frontend/` copy for your manual Vercel upload, using `window.MOUSECAM_CONFIG.API_BASE_URL`. It leaves the working source frontend and `.env` unchanged. Vercel uses Other, no build/install commands, output `.`, and no functions or API proxy. Backend configuration is still `MOUSECAM_ALLOWED_ORIGINS` in the private laptop `.env`.
 
-```javascript
-window.MOUSECAM_CONFIG = Object.freeze({ API_BASE_URL: "https://camera.example.org" });
-```
-
-Use an origin without an API path; the application appends `/api/...`. For local Flask hosting, retain `API_BASE_URL: ""` so all API URLs are relative and same-origin. If you edit it for deployment, restore the empty value for your local frontend copy.
-
-On the laptop, explicitly allow the exact deployed frontend origin, with no trailing slash:
-
-```dotenv
-MOUSECAM_ALLOWED_ORIGINS=https://your-project.vercel.app
-```
-
-Multiple approved origins can be comma-separated. Do not use `*`, wildcard preview domains, or blanket CORS. A Vercel preview deployment has a different origin and is denied until separately configured. CORS applies to the API and media; it is not a replacement for authentication.
-
-**HTTPS backend hosting/tunneling and approved laptop reachability are separate setup steps.** Provision neither from this project. A Vercel HTTPS frontend cannot reach the user's laptop through Vercel Functions by assuming `localhost` or `192.168.77.2` is public. Its browser calls the backend directly. Mixed HTTP/HTTPS content, private-network access restrictions, and institutional routing can block that path. Arrange an approved HTTPS endpoint/reverse proxy, retaining streaming support and forwarding the original Host header. Never proxy continuous preview through Vercel Functions. The default app does not trust client-supplied forwarded headers; any future trusted-proxy configuration must be limited to the real proxy and its documented headers. Rate limiting behind an unconfigured proxy uses the proxy address collectively.
-
-If you add a static-host CSP, allow the exact backend in `connect-src`, local scripts/styles, and `blob:` images/media. Native cross-origin `<img>`/`<video>` URLs cannot carry the bearer header; this client fetches preview JPEGs and saved files using `Authorization`, then displays Blob URLs. It does **not** rely on third-party cookies. It never stores codes/tokens in URLs or localStorage/sessionStorage. State-changing requests require a JSON body and bearer header; cookie authentication is not used, so there are no ambient cookies requiring CSRF tokens. Disallowed Origin headers are rejected server-side, including on login; allowed preflights permit only GET/POST and Authorization/Content-Type.
-
-Downloaded/viewed media must be fetched with authentication. Chromium's supported secure-context file picker streams downloads directly to a chosen file. Other browsers and media viewing use a full-file Blob, which may use substantial memory for long recordings; download those from the laptop capture folder if a phone lacks capacity. Closing the capture viewer revokes its Blob URL. Authentication gates new requests; a file already downloaded remains on that device.
-
-The local browser smoke test covers two localhost origins. **That is not evidence that a real Vercel/HTTPS/remote route works.** After configuring that route yourself, test sign-in, preflight, fresh preview, shared state from two devices, photo/video downloads, session expiry, and stream loss over the actual path before relying on remote access.
+Remote authentication uses an in-memory bearer token and authenticated JPEG fetches, not third-party cookies. Public-domain HTTPS/tunnel performance and actual iPhone access from mobile data still require the manual checks in that guide. No public deployment or tunnel was created during preparation.
 
 ## Recording, metadata, and timing limits
 

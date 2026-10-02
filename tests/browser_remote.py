@@ -112,13 +112,19 @@ def main():
                 context = browser.new_context(ignore_https_errors=True, viewport={'width': 390, 'height': 844}, is_mobile=True, has_touch=True, accept_downloads=True)
                 context.add_init_script("""
                     window.showSaveFilePicker = undefined;
+                    const originalFetch = window.fetch;
+                    window.fetch = (url, options) => {
+                        if (options?.credentials !== 'omit') throw new Error('API request must omit credentials');
+                        return originalFetch(url, options);
+                    };
                     Object.defineProperty(Document.prototype, 'cookie', {
                         get() { throw new Error('Cookies unavailable in this test'); },
                         set() { throw new Error('Cookies unavailable in this test'); }
                     });
                 """)
-                # Even a pre-existing backend cookie must not be sent by credentials: omit.
-                context.add_cookies([{'name': 'should-not-be-sent', 'value': 'test-only', 'domain': '127.0.0.1', 'path': '/', 'secure': True, 'sameSite': 'None'}])
+                # Cookies are unavailable: fresh empty jar, cookie API denied, and
+                # the proxy asserts no Cookie/Set-Cookie throughout the workflow.
+                context.clear_cookies()
                 app_errors = []
                 context.expose_binding('reportAppError', lambda source, message: app_errors.append(message))
                 context.add_init_script("addEventListener('unhandledrejection', e => window.reportAppError(String(e.reason))); addEventListener('error', e => { if (e.error) window.reportAppError(String(e.error)); });")
@@ -153,20 +159,25 @@ def main():
                 assert second.evaluate('localStorage.length === 0 && sessionStorage.length === 0')
                 # Actual cross-site fetches must reject a missing bearer and disallowed Origin.
                 assert second.evaluate("async () => (await fetch(window.MOUSECAM_CONFIG.API_BASE_URL + '/api/preview.jpg', {credentials:'omit'})).status") == 401
-                denied = context.request.get(backend_origin + '/api/status', headers={'Origin': 'https://not-allowed.example'})
-                assert denied.status == 403 and 'access-control-allow-origin' not in denied.headers
+                # Separate client for a deliberately disallowed Origin.
+                outsider = playwright.request.new_context(ignore_https_errors=True)
+                try:
+                    denied = outsider.get(backend_origin + '/api/status', headers={'Origin': 'https://not-allowed.example'})
+                    assert denied.status == 403 and 'access-control-allow-origin' not in denied.headers
+                finally:
+                    outsider.dispose()
                 with app.extensions['auth'].lock:
                     for key in app.extensions['auth'].sessions:
                         app.extensions['auth'].sessions[key] = time.monotonic() - 1
                 second.locator('#login-panel').wait_for(state='visible')
                 assert not app_errors, app_errors
-                assert not any(item['cookie'] or item['set_cookie'] for item in observed)
+                assert not any(item['cookie'] or item['set_cookie'] for item in observed), [item for item in observed if item['cookie'] or item['set_cookie']]
                 assert any(item['method'] == 'OPTIONS' and item['status'] == 204 and item['allowed'] == frontend_origin for item in observed)
                 assert any(item['path'] == '/api/preview.jpg' and item['status'] == 200 and item['bearer'] for item in observed)
                 assert all(item['bearer'] for item in observed if item['status'] == 200 and item['method'] != 'OPTIONS' and item['path'].startswith('/api/') and item['path'] != '/api/login')
                 context.close()
                 browser.close()
-                print(f'PASS ({args.browser}): cross-site HTTPS; cookie APIs unavailable; existing cookies never sent; real CORS preflight; authenticated JPEG, photo/view/download, shared record/stop, gallery/video download; logout and expiry; denied origin and unauthenticated preview; no persistent credentials. Local test certificates only, no public deployment.')
+                print(f'PASS ({args.browser}): cross-site HTTPS; cookie APIs unavailable; no Cookie/Set-Cookie; credentials: omit on every fetch; real CORS preflight; authenticated JPEG, photo/view/download, shared record/stop, gallery/video download; logout and expiry; denied origin and unauthenticated preview; no persistent credentials. Local test certificates only, no public deployment.')
         finally:
             camera.close()
             for server in (frontend, backend):

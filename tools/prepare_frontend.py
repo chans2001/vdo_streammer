@@ -39,7 +39,7 @@ def public_https_origin(value):
 def prepare(api_base_url, destination, source=ROOT / 'frontend'):
     origin = public_https_origin(api_base_url)
     source, destination = Path(source).resolve(), Path(destination).absolute()
-    if destination.is_symlink() or destination.is_junction():
+    if any(path.is_symlink() or path.is_junction() for path in (destination, *destination.parents)):
         raise ValueError('Deployment directory must not be a filesystem link.')
     destination = destination.resolve()
     if destination == source or source in destination.parents or destination in source.parents:
