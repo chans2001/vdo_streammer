@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="no-referrer">
+  <title>MouseCam · Lab camera</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="config.js" defer></script>
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <header><a class="brand" href="./"><img src="favicon.svg" alt="" width="36" height="36">MouseCam<span>LAB CAMERA</span></a><button id="logout" class="quiet" hidden>Sign out</button></header>
+  <main>
+    <section id="login-panel" class="login panel">
+      <p class="eyebrow">A SHARED VIEW OF YOUR LAB</p>
+      <h1>One camera.<br>Your whole team.</h1>
+      <p class="muted">View the live feed, capture a moment, and keep your recordings together on the lab laptop.</p>
+      <form id="login-form"><label for="access-code">Lab access code</label><input id="access-code" type="password" autocomplete="current-password" required minlength="12" maxlength="256"><button type="submit" id="login-button">Enter camera room <span aria-hidden="true">→</span></button></form>
+      <p class="small muted">Use the shared code provided by your lab. Signing out does not stop a shared recording.</p>
+    </section>
+    <div id="workspace" hidden>
+      <div class="page-heading"><div><p class="eyebrow">CAMERA ROOM / 01</p><h1>Lab live view</h1><p class="muted">One shared camera. Captures saved on the lab laptop.</p></div><span id="source-label" class="tag">Camera</span></div>
+      <div id="simulation" class="notice" hidden>SIMULATED CAMERA · Test pattern only. This is not the Pi camera.</div>
+      <section class="camera-grid">
+        <div class="preview-card"><div class="preview-heading"><span><span id="status-dot" class="dot"></span><strong id="camera-status">Connecting</strong></span><span class="small">PREVIEW · 640 × 360 · ~5 FPS</span></div><div class="preview-stage"><img id="preview" alt="Live shared camera preview" hidden><div id="offline"><span class="offline-symbol" aria-hidden="true">◉</span><strong id="offline-title">Waiting for the camera</strong><span id="offline-detail">A fresh frame will appear here.</span></div></div><div class="preview-footer"><span>1280 × 720 capture</span><span>15 fps video · No audio</span></div></div>
+        <aside class="panel controls"><p class="eyebrow">CAPTURE CONTROLS</p><h2>Keep a moment</h2><p class="muted small">Photos use the latest full-resolution frame.</p><button id="photo" class="secondary" disabled>Take Photo</button><div class="rule"></div><div class="record-heading"><h2>Shared recording</h2><span id="record-indicator" class="dot"></span></div><output id="timer">00:00:00</output><p id="record-status" class="small muted">Ready when you are.</p><div class="record-actions"><button id="start" disabled><span aria-hidden="true">●</span> Start Recording</button><button id="stop" class="danger" disabled><span aria-hidden="true">■</span> Stop Recording</button></div><p class="small muted">Everyone sees this recording. It keeps running if you leave or sign out.</p><p class="timing-note small">Timer shows elapsed wall time. Encoded duration can differ; camera timing is not scientifically validated.</p></aside>
+      </section>
+      <section class="gallery-section"><div class="gallery-heading"><div><p class="eyebrow">SAVED ON THE LAPTOP</p><h2>Capture library <span id="capture-count">0</span></h2></div><button id="refresh" class="quiet">Refresh library ↻</button></div><div id="gallery" class="gallery"></div><p id="empty" class="empty">Your captures will appear here.<br><span class="small">Take a photo or finish a recording to get started.</span></p></section>
+    </div>
+    <p id="message" role="status" aria-live="polite" hidden></p>
+  </main>
+  <footer>MouseCam <span>Shared lab camera · Laptop storage</span></footer>
+  <dialog id="viewer"><div class="viewer-heading"><h2 id="viewer-title">Capture</h2><button id="close-viewer" class="quiet" aria-label="Close capture">Close ×</button></div><div id="viewer-content"></div><p id="viewer-note" class="small muted"></p></dialog>
+</body>
+</html>

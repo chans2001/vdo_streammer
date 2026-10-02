@@ -1,0 +1,4 @@
+Flask>=3.1.2,<4
+waitress>=3.0.2,<4
+Pillow>=11.3,<13
+python-dotenv>=1.1,<2

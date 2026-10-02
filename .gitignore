@@ -1,0 +1,13 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+captures/
+*.log
+test-results/
+.browser-tools/
+.server.lock
+mousecam_*.mp4
+mousecam_*.jpg
+mousecam_*.json
+mousecam_*.json.tmp
