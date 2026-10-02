@@ -1,0 +1,8 @@
+# Allow only public frontend files, even if someone copies secrets into this folder.
+/*
+!/index.html
+!/app.js
+!/styles.css
+!/favicon.svg
+!/config.js
+!/vercel.json

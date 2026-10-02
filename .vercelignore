@@ -1,0 +1,3 @@
+# This repository root is a backend workspace, not a Vercel upload root.
+# Use the prepared .deploy/frontend directory described in REMOTE_DEPLOYMENT.md.
+/*

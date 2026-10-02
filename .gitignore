@@ -11,3 +11,10 @@ mousecam_*.mp4
 mousecam_*.jpg
 mousecam_*.json
 mousecam_*.json.tmp
+.deploy/
+.tools/
+.vercel/
+.env.*
+!.env.example
+*.pem
+*.key
